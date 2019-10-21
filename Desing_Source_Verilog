@@ -1,0 +1,60 @@
+`timescale 1ns / 1ps
+
+module siraliLED(
+        input clk,
+        output [15:0] ledler
+    );
+    
+    reg[15:0] siraliLed = 8'b0000_0000_0000_0111;
+    reg[15:0] siraliLed_next;
+    reg [31:0] sayac;
+    reg yavas_saat;
+    
+    initial begin 
+        yavas_saat = 1'b0;
+        sayac = 32'd0;
+    end
+    
+    localparam LEFT = 1'b0;
+    localparam RIGHT = 1'b1;
+    reg durum = LEFT, durum_next;
+    
+     always@(posedge clk) begin
+        if(sayac == 10**8 / 32) begin
+            sayac = 32'd1;
+            yavas_saat = ~yavas_saat;
+         end
+       else
+            sayac = sayac + 1;
+      end      
+    
+    
+    always@* begin
+        durum_next = durum;
+        siraliLed_next = siraliLed;
+        
+        case(durum)
+            LEFT: begin
+                siraliLed_next = siraliLed << 1;
+                
+                if(siraliLed_next == 16'b1110_0000_0000_0000)
+                    durum_next = RIGHT;
+            end //LEFT
+            
+            RIGHT: begin
+                siraliLed_next = siraliLed >> 1;
+                
+                if(siraliLed_next == 16'b0000_0000_0000_0111) begin
+                    durum_next = LEFT;
+                end
+            end //RIGHT
+        endcase
+    end
+    
+    always@(posedge yavas_saat) begin
+        siraliLed <= siraliLed_next;
+        durum <= durum_next;
+    end
+    
+    assign ledler = siraliLed;
+endmodule
